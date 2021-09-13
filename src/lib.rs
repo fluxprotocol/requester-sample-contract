@@ -1,4 +1,4 @@
-use near_sdk::{env, log, near_bindgen, AccountId, Balance, Promise, ext_contract};
+use near_sdk::{env, log, near_bindgen, AccountId, Balance, Promise};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::serde::{ Deserialize, Serialize };
 use near_sdk::serde_json::json;
@@ -67,11 +67,6 @@ pub struct NewDataRequestArgs {
     pub challenge_period: WrappedTimestamp,
     pub data_type: DataRequestDataType,
     pub creator: AccountId,
-}
-
-#[ext_contract]
-trait OracleContract {
-    fn get_outcome(&self, dr_id: U64);
 }
 
 near_sdk::setup_alloc!();
@@ -148,19 +143,20 @@ impl RequesterContract {
     pub fn create_data_request(
         &mut self,
         amount: WrappedBalance,
-        mut payload: NewDataRequestArgs
+        payload: NewDataRequestArgs
     ) -> Promise {
         self.assert_whitelisted();
         let nonce = self.get_nonce();
 
         // insert nonce into tags
-        let mut tags = payload.tags.unwrap_or(vec![]);
+        let mut new_payload = payload.clone();
+        let mut tags = new_payload.tags.unwrap_or(vec![]);
         tags.push(nonce.to_string());
-        payload.tags = Some(tags);
+        new_payload.tags = Some(tags);
 
         let dr = DataRequest{
             amount,
-            payload: payload.clone()
+            payload: new_payload.clone()
         };
         self.data_requests.insert(&nonce, &dr);
         log!("storing data request under {}", nonce);
@@ -168,7 +164,7 @@ impl RequesterContract {
             self.stake_token.clone(),
             self.oracle.clone(),
             amount.into(),
-            json!({"NewDataRequest": payload}).to_string() 
+            json!({"NewDataRequest": new_payload}).to_string() 
         )
     }
 
@@ -192,19 +188,6 @@ impl RequesterContract {
             &tags.last().unwrap().parse::<u64>().unwrap(),
             &result
         );
-    }
-    
-    #[payable]
-    pub fn get_outcome(
-        &mut self,
-        request_id: U64,
-    ) -> Promise {
-        oracle_contract::get_outcome(
-            request_id, 
-            &self.oracle.as_str(),
-            0,
-            1_000_000_000_000
-        )
     }
 
     pub fn get_data_request(&self, nonce: U64) -> Option<DataRequest> {
@@ -262,7 +245,7 @@ mod tests {
     fn ri_not_oracle() {
         let context = get_context(vec![], false);
         testing_env!(context);
-        let mut contract = RequesterContract::new(
+        let contract = RequesterContract::new(
             oracle(),
             token(),
             None,
