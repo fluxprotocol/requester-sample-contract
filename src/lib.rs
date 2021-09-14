@@ -80,12 +80,12 @@ impl RequesterContract {
         payload: NewDataRequestArgs
     ) -> Promise {
         self.assert_whitelisted();
-        let nonce = self.nonce.get_and_incr();
+        let request_id = self.nonce.get_and_incr();
 
-        // insert nonce into tags
+        // insert request_id into tags
         let mut payload = payload;
         let mut tags = payload.tags.unwrap_or(vec![]);
-        tags.push(nonce.to_string());
+        tags.push(request_id.to_string());
         payload.tags = Some(tags.to_vec());
 
         let dr = DataRequest{
@@ -94,8 +94,8 @@ impl RequesterContract {
             tags: tags,
             status: RequestStatus::Pending
         };
-        self.data_requests.insert(&nonce, &dr);
-        log!("storing data request under {}", nonce);
+        self.data_requests.insert(&request_id, &dr);
+        log!("storing data request under {}", request_id);
         fungible_token_transfer_call(
             self.stake_token.clone(),
             self.oracle.clone(),
