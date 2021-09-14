@@ -269,7 +269,7 @@ mod tests {
             creator: alice(),
         });
 
-        assert!(contract.data_requests.get(&1).is_some());
+        assert!(contract.data_requests.get(&0).is_some());
     }
 
     #[test]
@@ -292,7 +292,7 @@ mod tests {
             creator: alice(),
         });
 
-        assert!(contract.data_requests.get(&1).is_some());
+        assert!(contract.data_requests.get(&0).is_some());
     }
 
     #[test]
@@ -325,6 +325,6 @@ mod tests {
             creator: alice(),
         });
 
-        assert!(contract.data_requests.get(&2).is_some());
+        assert!(contract.data_requests.get(&1).is_some());
     }
 }
