@@ -7,63 +7,20 @@ use near_sdk::serde_json::json;
 use near_sdk::json_types::{U64, U128, ValidAccountId};
 use near_sdk::collections::{UnorderedSet, LookupMap};
 use fungible_token_handler::fungible_token_transfer_call;
-use types::{Outcome};
+use types::*;
 
 mod fungible_token_handler;
 
-#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Clone)]
-pub struct Source {
-    pub end_point: String,
-    pub source_path: String
-}
-
-#[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Clone, Deserialize, Serialize)]
-pub enum DataResponseStatus {
-    Pending,
-    Finalized(Outcome)
-}
-
-#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize, Debug, PartialEq, Clone)]
-pub enum DataRequestDataType {
-    Number(U128),
-    String,
-}
-#[derive(BorshSerialize, BorshDeserialize, Deserialize, Serialize)]
-pub struct DataRequest {
-    amount: WrappedBalance,
-    payload: NewDataRequestArgs
-}
-
-#[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq, Clone, Deserialize, Serialize)]
-pub struct DataResponse {
-    status: DataResponseStatus,
-    tags: Vec<String>
-}
-
-#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone)]
-pub struct NewDataRequestArgs {
-    pub sources: Option<Vec<Source>>,
-    pub tags: Option<Vec<String>>,
-    pub description: Option<String>,
-    pub outcomes: Option<Vec<String>>,
-    pub challenge_period: WrappedTimestamp,
-    pub data_type: DataRequestDataType,
-    pub creator: AccountId,
-}
-
 near_sdk::setup_alloc!();
 
-pub type WrappedTimestamp = U64;
-pub type WrappedBalance = U128;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct RequesterContract {
     pub oracle: AccountId,
     pub stake_token: AccountId,
-    pub nonce: u64,
+    pub nonce: Nonce,
     pub data_requests: LookupMap<u64, DataRequest>,
-    pub data_responses: LookupMap<u64, DataResponse>,
     pub whitelist: UnorderedSet<AccountId> // accounts allowed to call create_data_request(). if len() == 0, no whitelist (any account can make data request)
 }
 
@@ -88,10 +45,6 @@ impl RequesterContract {
         }
     }
 
-    fn get_nonce(&mut self) -> u64 {
-        self.nonce += 1;
-        self.nonce
-    }   
 }
 
 #[near_bindgen]
@@ -105,9 +58,8 @@ impl RequesterContract {
         let mut requester_instance = Self {
             oracle,
             stake_token,
-            nonce: 0,
+            nonce: Nonce::new(),
             data_requests: LookupMap::new(b"drq".to_vec()),
-            data_responses: LookupMap::new(b"drs".to_vec()),
             whitelist: UnorderedSet::new(b"w".to_vec())
         };
 
@@ -128,17 +80,19 @@ impl RequesterContract {
         payload: NewDataRequestArgs
     ) -> Promise {
         self.assert_whitelisted();
-        let nonce = self.get_nonce();
+        let nonce = self.nonce.get_and_incr();
 
         // insert nonce into tags
-        let mut new_payload = payload.clone();
-        let mut tags = new_payload.tags.unwrap_or(vec![]);
+        let mut payload = payload;
+        let mut tags = payload.tags.unwrap_or(vec![]);
         tags.push(nonce.to_string());
-        new_payload.tags = Some(tags);
+        payload.tags = Some(tags.to_vec());
 
         let dr = DataRequest{
             amount,
-            payload: new_payload.clone()
+            payload: payload.clone(),
+            tags: tags,
+            status: RequestStatus::Pending
         };
         self.data_requests.insert(&nonce, &dr);
         log!("storing data request under {}", nonce);
@@ -146,7 +100,7 @@ impl RequesterContract {
             self.stake_token.clone(),
             self.oracle.clone(),
             amount.into(),
-            json!({"NewDataRequest": new_payload}).to_string() 
+            json!({"NewDataRequest": payload}).to_string() 
         )
     }
 
@@ -161,23 +115,14 @@ impl RequesterContract {
         assert_eq!(env::current_account_id(), requestor, "can only set outcomes for requests that are initiated by this requester");
         assert_eq!(env::attached_deposit(), 1);
 
-        // insert finalized data request outcome into this contract
-        let result = DataResponse {
-            status: DataResponseStatus::Finalized(outcome),
-            tags: tags.clone()
-        };
-        self.data_responses.insert(
-            &tags.last().unwrap().parse::<u64>().unwrap(),
-            &result
-        );
+        let request_id = tags.last().unwrap().parse::<u64>().unwrap();
+        let mut request = self.data_requests.get(&request_id).unwrap();
+        request.status = RequestStatus::Finalized(outcome);
+        self.data_requests.insert(&request_id, &request);
     }
 
     pub fn get_data_request(&self, nonce: U64) -> Option<DataRequest> {
         self.data_requests.get(&u64::from(nonce))
-    }
-
-    pub fn get_data_response(&self, nonce: U64) -> Option<DataResponse> {
-        self.data_responses.get(&u64::from(nonce))
     }
 }
 
