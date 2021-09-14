@@ -121,8 +121,8 @@ impl RequesterContract {
         self.data_requests.insert(&request_id, &request);
     }
 
-    pub fn get_data_request(&self, nonce: U64) -> Option<DataRequest> {
-        self.data_requests.get(&u64::from(nonce))
+    pub fn get_data_request(&self, request_id: U64) -> Option<DataRequest> {
+        self.data_requests.get(&u64::from(request_id))
     }
 }
 
