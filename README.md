@@ -23,6 +23,23 @@ bash scripts/deploy_requester.sh --accountId $REQUESTER
 bash scripts/reset_account.sh --master $ACCOUNT --account $REQUESTER
 ```
 
+## Sending your 1st request
+
+```bash
+# set vars
+REQUESTER=requester.account.testnet
+
+# send an example arbitrator request at the requester contract that you just deployed
+sh scripts/new_request.sh $REQUESTER
+
+# retrieve the details of the request that you just created (request at index 0)
+sh scripts/get_request.sh $REQUESTER 0
+
+# once you've sent more requests, you can call the `get_request` script with the
+# exact index number you're interested in to view the details of the request at
+# that specific index
+```
+
 ## Options
 
 ### Whitelist
