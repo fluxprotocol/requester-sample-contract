@@ -2,7 +2,7 @@
 
 # default params
 network=${network:-testnet}
-account=${accountId:-flux-dev}
+accountId=${accountId:-flux-dev}
 master=${master:-flux-dev}
 initialBalance=${initialBalance:-5}
 
@@ -17,5 +17,5 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-NEAR_ENV=$network near delete $account $master
-NEAR_ENV=$network near create-account $account --masterAccount $master --initialBalance $initialBalance
+NEAR_ENV=$network near delete $accountId $master
+NEAR_ENV=$network near create-account $accountId --masterAccount $master --initialBalance $initialBalance
