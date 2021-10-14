@@ -14,7 +14,7 @@ near_sdk::setup_alloc!();
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct RequesterContract {
     pub oracle: AccountId,
-    pub stake_token: AccountId,
+    pub payment_token: AccountId,
     pub nonce: Nonce,
     pub data_requests: LookupMap<u64, DataRequestDetails>,
     pub whitelist: UnorderedSet<AccountId> // accounts allowed to call create_data_request(). if len() == 0, no whitelist (any account can make data request)
@@ -48,12 +48,12 @@ impl RequesterContract {
     #[init]
     pub fn new(
         oracle: AccountId,
-        stake_token: AccountId,
+        payment_token: AccountId,
         whitelist: Option<Vec<ValidAccountId>>,
     ) -> Self {
         let mut requester_instance = Self {
             oracle,
-            stake_token,
+            payment_token,
             nonce: Nonce::new(),
             data_requests: LookupMap::new(b"drq".to_vec()),
             whitelist: UnorderedSet::new(b"w".to_vec())
@@ -93,7 +93,7 @@ impl RequesterContract {
         self.data_requests.insert(&request_id, &dr);
         log!("storing data request under {}", request_id);
         fungible_token_transfer_call(
-            self.stake_token.clone(),
+            self.payment_token.clone(),
             self.oracle.clone(),
             amount.into(),
             json!({"NewDataRequest": payload}).to_string() 

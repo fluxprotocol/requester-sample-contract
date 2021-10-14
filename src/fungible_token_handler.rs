@@ -52,7 +52,7 @@ impl RequesterContract {
         receiver_id: AccountId
     ) -> Promise {
         self.assert_oracle();
-        assert_eq!(self.stake_token.clone(), token_id, "ERR_INVALID_STAKE_TOKEN");
-        fungible_token_transfer(self.stake_token.clone(), receiver_id.clone(), amount)
+        assert_eq!(self.payment_token.clone(), token_id, "ERR_INVALID_PAYMENT_TOKEN");
+        fungible_token_transfer(self.payment_token.clone(), receiver_id.clone(), amount)
     }
 }
