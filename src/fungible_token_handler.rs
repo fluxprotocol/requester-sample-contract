@@ -1,9 +1,7 @@
 use crate::*;
 
-use near_sdk::{ext_contract, json_types::U128, AccountId, Gas, Promise, PromiseOrValue, serde_json};
-
-const GAS_BASE_TRANSFER: Gas = 5_000_000_000_000;
-const DR_NEW_GAS: Gas = 200_000_000_000_000;
+use flux_sdk::consts::{DR_NEW_GAS, GAS_BASE_TRANSFER};
+use near_sdk::{ext_contract, json_types::U128, serde_json, AccountId, Promise, PromiseOrValue};
 
 #[ext_contract(fungible_token)]
 pub trait FungibleToken {

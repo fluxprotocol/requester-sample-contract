@@ -9,5 +9,5 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 near-sdk = "3.1.0"
-flux-sdk = { git = "https://github.com/fluxprotocol/flux-sdk-rs.git", rev="433b3297eaac4600b8c8a8bb2673081480379511" }
+flux-sdk = { git = "https://github.com/fluxprotocol/flux-sdk-rs.git", rev="f60b3ba2a6909cb12b3b06a04f722084d9c654c5" }
 serde = "1.0.118"
