@@ -110,11 +110,11 @@ impl RequesterContract {
     }
 
     #[payable]
-    pub fn set_outcome(&mut self, requestor: AccountId, outcome: Outcome, tags: Vec<String>) {
+    pub fn set_outcome(&mut self, requester: AccountId, outcome: Outcome, tags: Vec<String>) {
         self.assert_caller(&self.oracle);
         assert_eq!(
             env::current_account_id(),
-            requestor,
+            requester,
             "can only set outcomes for requests that are initiated by this requester"
         );
         assert_eq!(env::attached_deposit(), 1);
