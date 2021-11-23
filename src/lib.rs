@@ -1,7 +1,7 @@
 use flux_sdk::{
     DataRequestDetails, NewDataRequestArgs, Nonce, Outcome, RequestStatus, WrappedBalance,
 };
-use fungible_token_handler::{fungible_token_transfer, fungible_token_transfer_call};
+use fungible_token_handler::{fungible_token_transfer_call};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, UnorderedSet};
 use near_sdk::json_types::{ValidAccountId, U64};
@@ -123,13 +123,6 @@ impl RequesterContract {
         let mut request = self.data_requests.get(&request_id).unwrap();
         request.status = RequestStatus::Finalized(outcome);
         self.data_requests.insert(&request_id, &request);
-
-        // forward returned validity bond from requester to creator
-        fungible_token_transfer(
-            self.payment_token.clone(),
-            request.creator,
-            request.amount.into(),
-        );
     }
 
     pub fn get_data_request(&self, request_id: U64) -> Option<DataRequestDetails> {
