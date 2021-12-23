@@ -20,6 +20,9 @@ sh build.sh
 
 bash scripts/deploy_requester.sh --accountId $REQUESTER
 
+# and initialize the account
+bash scripts/init_requester.sh --accountId $REQUESTER --oracle 09.oracle.flux-dev --patmentToken v2.wnear.flux-dev
+
 bash scripts/reset_account.sh --master $ACCOUNT --account $REQUESTER
 ```
 
@@ -30,7 +33,7 @@ bash scripts/reset_account.sh --master $ACCOUNT --account $REQUESTER
 REQUESTER=requester.account.testnet
 
 # send an example arbitrator request at the requester contract that you just deployed
-sh scripts/new_request.sh $REQUESTER
+bash ./scripts/new_request.sh --accountId $REQUESTER --paymentToken v2.wnear.flux-dev  --senderId $ACCOUNT
 
 # retrieve the details of the request that you just created (request at index 0)
 sh scripts/get_request.sh $REQUESTER 0
